@@ -104,6 +104,9 @@ Enable **Demo mode** in the sidebar (no API key required) to load pre-computed s
 ### Sample custom CSV
 
 The sidebar provides a downloadable CSV template for uploading custom task categories:
+<img width="1303" height="897" alt="7cffc9a96c1ed4b7d6e7758ecfa893e1" src="https://github.com/user-attachments/assets/badef89b-9cfb-4c00-aa50-e9fa71babda3" />
+<img width="1885" height="934" alt="d69ec2156ba0be6650bd3d1fe0d432cb" src="https://github.com/user-attachments/assets/6d039b24-8940-4d4f-9306-ab3d834f5ccd" />
+<img width="1915" height="939" alt="99c07e9d0170476ae8c465069a29c725" src="https://github.com/user-attachments/assets/c1ead66c-1b32-47de-bb0f-51ff0b8b8346" />
 
 ```
 id,category,question,response_a,response_b,
