@@ -104,9 +104,17 @@ Enable **Demo mode** in the sidebar (no API key required) to load pre-computed s
 ### Sample custom CSV
 
 The sidebar provides a downloadable CSV template for uploading custom task categories:
-<img width="1303" height="897" alt="7cffc9a96c1ed4b7d6e7758ecfa893e1" src="https://github.com/user-attachments/assets/badef89b-9cfb-4c00-aa50-e9fa71babda3" />
-<img width="1885" height="934" alt="d69ec2156ba0be6650bd3d1fe0d432cb" src="https://github.com/user-attachments/assets/6d039b24-8940-4d4f-9306-ab3d834f5ccd" />
-<img width="1915" height="939" alt="99c07e9d0170476ae8c465069a29c725" src="https://github.com/user-attachments/assets/c1ead66c-1b32-47de-bb0f-51ff0b8b8346" />
+
+<img width="1901" height="916" alt="eafb9a3e2ecc5d83a70797c82810cef0" src="https://github.com/user-attachments/assets/68fdd278-8ef2-4ad0-af48-65724e7b9f7a" />
+<img width="1879" height="934" alt="3a77442dced45690c0d4178d9d3c2466" src="https://github.com/user-attachments/assets/60da0f20-4549-4d9a-9404-12154bf19142" />
+
+<img width="1875" height="942" alt="9b0b521c6173322de4d9ef18b65456be" src="https://github.com/user-attachments/assets/9a4f1903-9c44-43cc-8012-b7d8e80494b8" />
+<img width="1844" height="918" alt="1f956f7fd4feed97f2dab192883168b0" src="https://github.com/user-attachments/assets/5ab47c77-6312-4a14-92f3-bef676d1265c" />
+<img width="1866" height="929" alt="44bf3f5bdcb50cce0bad8a4933373010" src="https://github.com/user-attachments/assets/770b21a8-3410-4314-8f48-388281f9c3fc" />
+
+
+
+
 
 ```
 id,category,question,response_a,response_b,
