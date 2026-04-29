@@ -1,6 +1,7 @@
 # LLM Judge Trust Calibration
 
-A Streamlit application that helps enterprise managers decide **when AI evaluation can replace human review** — and when it cannot.
+A Streamlit application that helps enterprise managers decide **when AI evaluation can replace human review** — and when it cannot.This app helps managers decide when LLM-based evaluation can safely replace human review using measurable agreement and bias metrics.
+
 
 ---
 
