@@ -1,8 +1,9 @@
 """
-Trust Analysis Module
+Trust Analysis Module — Enterprise Deployment Edition
 
 Computes agreement statistics between LLM judge scores and human annotations,
-runs bias probes, and produces a trust verdict per task category / dimension.
+runs bias probes, produces a trust verdict per category, and generates
+deployment recommendations for enterprise automation decisions.
 """
 
 import math
@@ -30,18 +31,35 @@ class DimensionStats:
 class CategoryReport:
     category: str
     dimension_stats: list[DimensionStats]
-    consistency_variance: dict[str, float]   # dimension → variance across runs
-    position_bias_rate: float                # fraction of pairs where order changed verdict
-    verbosity_bias_rho: float                # Spearman ρ between response length and score
+    consistency_variance: dict[str, float]
+    position_bias_rate: float
+    verbosity_bias_rho: float
     verdict: Literal["green", "yellow", "red"]
     verdict_reason: str
-    overall_rho: float                       # average Spearman ρ across dimensions
+    overall_rho: float
+
+@dataclass
+class DeploymentRecommendation:
+    category: str
+    action: str        # "automate" | "hybrid" | "human_required"
+    action_label: str
+    rationale: str
+
+@dataclass
+class CostModelResult:
+    full_human_monthly: float
+    full_llm_monthly: float
+    hybrid_monthly: float
+    hybrid_savings_pct: float
+    automatable_fraction: float
+    avg_accuracy_loss: float
 
 @dataclass
 class TrustReport:
     category_reports: list[CategoryReport]
     overall_verdict: Literal["green", "yellow", "red"]
     summary: str
+    deployment_recommendations: list[DeploymentRecommendation] = field(default_factory=list)
 
 
 # ── Core analysis functions ───────────────────────────────────────────────────
@@ -51,9 +69,8 @@ def compute_dimension_stats(
     human_scores: list[int],
     dimension: str,
 ) -> DimensionStats:
-    """Spearman ρ and Cohen's κ between judge and human scores for one dimension."""
     n = len(judge_scores)
-    assert len(human_scores) == n, "Score lists must have the same length."
+    assert len(human_scores) == n
 
     if n < 3:
         return DimensionStats(
@@ -66,7 +83,6 @@ def compute_dimension_stats(
         )
 
     rho, p = stats.spearmanr(judge_scores, human_scores)
-    # Cohen's κ requires matching categories; use buckets 1-5
     try:
         kappa = cohen_kappa_score(human_scores, judge_scores)
     except Exception:
@@ -87,17 +103,12 @@ def compute_dimension_stats(
 def compute_consistency_variance(
     multi_run_scores: list[list[dict]],
 ) -> dict[str, float]:
-    """
-    Given scores from n_runs repeated judge calls (list of list of score dicts),
-    return per-dimension variance.
-    """
     dim_scores: dict[str, list[int]] = {d: [] for d in DIMENSIONS}
     for run in multi_run_scores:
         for score_dict in run:
             for dim in DIMENSIONS:
                 if dim in score_dict:
                     dim_scores[dim].append(int(score_dict[dim]))
-
     return {
         dim: round(float(np.var(scores)) if scores else float("nan"), 4)
         for dim, scores in dim_scores.items()
@@ -108,10 +119,6 @@ def compute_position_bias(
     original_preferences: list[str],
     swapped_preferences: list[str],
 ) -> float:
-    """
-    Returns the fraction of cases where flipping A↔B changed the preference verdict.
-    A rate > 0.2 indicates notable position bias.
-    """
     if not original_preferences:
         return float("nan")
     changed = sum(
@@ -126,10 +133,6 @@ def compute_verbosity_bias(
     responses: list[str],
     dimension: str = "helpfulness",
 ) -> float:
-    """
-    Spearman ρ between response length (in words) and judge score for a dimension.
-    A high positive correlation indicates verbosity bias.
-    """
     lengths = [len(r.split()) for r in responses]
     if len(set(lengths)) < 2:
         return float("nan")
@@ -144,21 +147,8 @@ def get_trust_verdict(
     verbosity_bias_rho: float,
     consistency_variance: dict[str, float],
 ) -> tuple[Literal["green", "yellow", "red"], str, float]:
-    """
-    Determines the trust verdict for a category.
-
-    Returns (verdict, reason, overall_rho).
-    Thresholds (from proposal):
-      green  → avg Spearman ρ > 0.70
-      yellow → 0.50 < avg ρ ≤ 0.70
-      red    → avg ρ ≤ 0.50
-    """
-    valid_rhos = [
-        s.spearman_rho for s in dim_stats
-        if not math.isnan(s.spearman_rho)
-    ]
+    valid_rhos = [s.spearman_rho for s in dim_stats if not math.isnan(s.spearman_rho)]
     overall_rho = round(float(np.mean(valid_rhos)), 3) if valid_rhos else float("nan")
-
     reasons = []
 
     if math.isnan(overall_rho):
@@ -174,65 +164,122 @@ def get_trust_verdict(
         base_verdict = "red"
         reasons.append(f"Weak human-judge agreement (avg ρ = {overall_rho:.2f}); human review required.")
 
-    # Escalate for high position bias
     if not math.isnan(position_bias_rate) and position_bias_rate > 0.30:
-        reasons.append(f"High position bias detected ({position_bias_rate:.0%} of pairs flip).")
+        reasons.append(f"High position bias ({position_bias_rate:.0%} of pairs flip).")
         if base_verdict == "green":
             base_verdict = "yellow"
 
-    # Escalate for high verbosity bias
-    if not math.isnan(verbosity_bias_rho) and abs(verbosity_bias_rho) > 0.50:
-        reasons.append(f"Verbosity bias detected (length–score ρ = {verbosity_bias_rho:.2f}).")
-        if base_verdict == "green":
-            base_verdict = "yellow"
-
-    # Escalate for high consistency variance
-    avg_var = np.mean([v for v in consistency_variance.values() if not math.isnan(v)])
-    if not math.isnan(avg_var) and avg_var > 0.5:
-        reasons.append(f"Low consistency across repeated runs (avg variance = {avg_var:.2f}).")
-        if base_verdict != "red":
-            base_verdict = "yellow"
+    if not math.isnan(verbosity_bias_rho):
+        reasons.append(f"Verbosity bias ρ = {verbosity_bias_rho:.2f} (reported; not used for verdict).")
 
     return base_verdict, " ".join(reasons), overall_rho
 
 
-# ── High-level analysis pipeline ─────────────────────────────────────────────
+def get_deployment_recommendation(
+    verdict: Literal["green", "yellow", "red"],
+    overall_rho: float,
+    position_bias_rate: float,
+    category: str,
+) -> DeploymentRecommendation:
+    rho_str = f"ρ={overall_rho:.2f}" if not math.isnan(overall_rho) else "ρ=N/A"
+    if verdict == "green":
+        return DeploymentRecommendation(
+            category=category,
+            action="automate",
+            action_label="✅ Automate",
+            rationale=f"Strong agreement ({rho_str}). LLM evaluation can reliably replace human review.",
+        )
+    elif verdict == "yellow":
+        return DeploymentRecommendation(
+            category=category,
+            action="hybrid",
+            action_label="⚠️ Hybrid",
+            rationale=f"Moderate agreement ({rho_str}). Use LLM for pre-screening; route ~30% of edge cases to human review.",
+        )
+    else:
+        return DeploymentRecommendation(
+            category=category,
+            action="human_required",
+            action_label="🔴 Human Required",
+            rationale=f"Low agreement ({rho_str}). LLM evaluation is not reliable enough to replace human review.",
+        )
+
+
+def compute_cost_model(
+    category_reports: list[CategoryReport],
+    human_cost_per_case: float,
+    llm_cost_per_case: float,
+    monthly_volume: int,
+) -> CostModelResult:
+    if not category_reports:
+        return CostModelResult(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    n_cats = len(category_reports)
+    green = [cr for cr in category_reports if cr.verdict == "green"]
+    yellow = [cr for cr in category_reports if cr.verdict == "yellow"]
+    red = [cr for cr in category_reports if cr.verdict == "red"]
+
+    green_frac = len(green) / n_cats
+    yellow_frac = len(yellow) / n_cats
+    red_frac = len(red) / n_cats
+
+    full_human = monthly_volume * human_cost_per_case
+    full_llm = monthly_volume * llm_cost_per_case
+
+    # Hybrid: green→LLM only, yellow→LLM + 30% human spot-check, red→full human
+    hybrid = monthly_volume * (
+        green_frac * llm_cost_per_case
+        + yellow_frac * (llm_cost_per_case + 0.30 * human_cost_per_case)
+        + red_frac * human_cost_per_case
+    )
+
+    automatable_frac = green_frac + 0.70 * yellow_frac
+
+    auto_maes = []
+    for cr in green + yellow:
+        valid = [ds.mean_abs_error for ds in cr.dimension_stats if not math.isnan(ds.mean_abs_error)]
+        if valid:
+            auto_maes.append(float(np.mean(valid)))
+    avg_acc_loss = round(float(np.mean(auto_maes)), 3) if auto_maes else 0.0
+
+    savings_pct = (full_human - hybrid) / full_human if full_human > 0 else 0.0
+
+    return CostModelResult(
+        full_human_monthly=round(full_human, 2),
+        full_llm_monthly=round(full_llm, 2),
+        hybrid_monthly=round(hybrid, 2),
+        hybrid_savings_pct=round(savings_pct, 3),
+        automatable_fraction=round(automatable_frac, 3),
+        avg_accuracy_loss=avg_acc_loss,
+    )
+
+
+# ── High-level pipeline ───────────────────────────────────────────────────────
 
 def build_category_report(
     category: str,
-    cases: list[dict],
-    judge_results: list[dict],          # one dict per case with dimension scores
-    pairwise_original: list[str],       # judge preferences (A/B/tie) in original order
-    pairwise_swapped: list[str],        # judge preferences with A/B swapped
-    consistency_runs: list[list[dict]], # n_runs × n_cases score dicts
+    flat_cases: list[dict],
+    judge_results: list[dict],
+    pairwise_original: list[str],
+    pairwise_swapped: list[str],
+    consistency_runs: list[list[dict]],
 ) -> CategoryReport:
     """
-    Aggregate all statistics for one category into a CategoryReport.
-
-    judge_results: list of dicts like {"helpfulness": 4, "factual_accuracy": 3, ...}
-    Each case has human_scores {"helpfulness": {"a": 5, "b": 3}, ...}
-    We compare judge score for response_a against human score for response_a.
+    flat_cases: list of flat eval dicts (from get_flat_eval_cases) for this category.
+    judge_results: one score dict per flat_case, in the same order.
     """
     dim_stats_list = []
-    all_responses_a = [c["response_a"] for c in cases]
+    all_responses = [ec["response"] for ec in flat_cases]
 
     for dim in DIMENSIONS:
         judge_dim_scores = [jr.get(dim, 3) for jr in judge_results]
-        human_dim_scores = [c["human_scores"][dim]["a"] for c in cases]
-        dim_stats_list.append(
-            compute_dimension_stats(judge_dim_scores, human_dim_scores, dim)
-        )
+        human_dim_scores = [ec["human_scores"][dim] for ec in flat_cases]
+        dim_stats_list.append(compute_dimension_stats(judge_dim_scores, human_dim_scores, dim))
 
-    # Consistency
     consistency_var = compute_consistency_variance(consistency_runs)
-
-    # Position bias
     pos_bias = compute_position_bias(pairwise_original, pairwise_swapped)
-
-    # Verbosity bias (helpfulness vs response_a length)
     help_scores = [jr.get("helpfulness", 3) for jr in judge_results]
-    verb_bias = compute_verbosity_bias(help_scores, all_responses_a)
-
+    verb_bias = compute_verbosity_bias(help_scores, all_responses)
     verdict, reason, overall_rho = get_trust_verdict(
         category, dim_stats_list, pos_bias, verb_bias, consistency_var
     )
@@ -250,36 +297,50 @@ def build_category_report(
 
 
 def build_trust_report(category_reports: list[CategoryReport]) -> TrustReport:
-    """Roll up category reports into an overall trust verdict."""
     verdicts = [r.verdict for r in category_reports]
     if verdicts.count("red") >= 2:
         overall = "red"
         summary = "Multiple task categories show low LLM-judge reliability. Human review strongly recommended."
     elif "red" in verdicts or verdicts.count("yellow") >= 2:
         overall = "yellow"
-        summary = "LLM judge is reliable for some categories. Review flagged categories before deploying."
+        summary = "LLM judge is reliable for some categories. Use a hybrid approach before full deployment."
     else:
         overall = "green"
-        summary = "LLM judge shows strong agreement with human annotators across most categories."
+        summary = "LLM judge shows strong agreement with human annotators. Automation is viable."
+
+    recs = [
+        get_deployment_recommendation(cr.verdict, cr.overall_rho, cr.position_bias_rate, cr.category)
+        for cr in category_reports
+    ]
 
     return TrustReport(
         category_reports=category_reports,
         overall_verdict=overall,
         summary=summary,
+        deployment_recommendations=recs,
     )
 
 
-# ── Utility: format a report as a plain-text summary ─────────────────────────
+# ── Report formatter ──────────────────────────────────────────────────────────
 
 def format_report(report: TrustReport) -> str:
-    lines = [f"OVERALL VERDICT: {report.overall_verdict.upper()}", report.summary, ""]
+    lines = [
+        f"OVERALL VERDICT: {report.overall_verdict.upper()}",
+        report.summary,
+        "",
+        "DEPLOYMENT RECOMMENDATIONS",
+        "-" * 40,
+    ]
+    for rec in report.deployment_recommendations:
+        lines.append(f"  {rec.category.upper()}: {rec.action_label}")
+        lines.append(f"    {rec.rationale}")
+    lines += ["", "DETAILED STATISTICS", "-" * 40]
     for cr in report.category_reports:
         lines.append(f"Category: {cr.category.upper()} — {cr.verdict.upper()}")
-        lines.append(f"  Reason: {cr.verdict_reason}")
+        lines.append(f"  {cr.verdict_reason}")
         lines.append(f"  Overall ρ: {cr.overall_rho:.3f}")
         lines.append(f"  Position bias: {cr.position_bias_rate:.1%}")
         lines.append(f"  Verbosity bias ρ: {cr.verbosity_bias_rho:.3f}")
-        lines.append("  Dimension stats:")
         for ds in cr.dimension_stats:
             lines.append(
                 f"    {ds.dimension:<18} ρ={ds.spearman_rho:.3f}  κ={ds.cohens_kappa:.3f}  MAE={ds.mean_abs_error:.2f}"

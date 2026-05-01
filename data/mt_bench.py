@@ -1169,6 +1169,281 @@ MT_BENCH_CASES = [
         },
         "human_preference": "a",
     },
+
+    # ─────────────────────────────────────────────────────────────────────
+    # LENGTH-INVERTED CASES  (short=good, long=bad)
+    # These cases ensure verbosity bias is measured against genuinely
+    # verbose-but-wrong responses, not just short-but-wrong ones.
+    # ─────────────────────────────────────────────────────────────────────
+
+    # WRITING — length-inverted
+    {
+        "id": "W10", "category": "writing",
+        "question": "Write a one-sentence tagline for a new coffee brand called 'Dawn Roast' that emphasizes freshness.",
+        "response_a": (
+            "Dawn Roast — ground at sunrise, in your hands by morning."
+        ),
+        "response_b": (
+            "Dawn Roast is a really great new coffee brand that we have created to bring you the "
+            "freshest possible coffee experience that you can find anywhere in the market today. "
+            "We believe that coffee should be fresh and delicious and that's why we make our "
+            "Dawn Roast coffee in a way that ensures maximum freshness at every step of the "
+            "process from bean to cup. When you drink Dawn Roast you are drinking the freshest "
+            "coffee that money can buy and we are fully committed to making sure that every single "
+            "cup you drink is as fresh as it can possibly be. Try Dawn Roast today for the "
+            "freshest coffee experience you have ever had in your life."
+        ),
+        "human_scores": {
+            "helpfulness":      {"a": 5, "b": 2},
+            "factual_accuracy": {"a": 5, "b": 5},
+            "coherence":        {"a": 5, "b": 1},
+            "safety":           {"a": 5, "b": 5},
+        },
+        "human_preference": "a",
+    },
+    {
+        "id": "W11", "category": "writing",
+        "question": "In one sentence, explain what machine learning is to a non-technical executive.",
+        "response_a": (
+            "Machine learning lets computers improve their predictions automatically by finding "
+            "patterns in historical data — without being manually reprogrammed for each new situation."
+        ),
+        "response_b": (
+            "Machine learning is a very interesting and complex area of computer science and "
+            "artificial intelligence that involves training computer systems and algorithms using "
+            "very large amounts of historical data so that they can learn patterns from that data "
+            "and then use those learned patterns to make decisions or predictions on new data that "
+            "they have never seen before in their training. It is related to but also quite "
+            "different from traditional programming approaches because instead of writing very "
+            "explicit step-by-step rules and instructions, the computer system learns the rules "
+            "from the data itself which is considered to be very powerful and has many different "
+            "applications in business, technology, healthcare, finance, and many other industries "
+            "today and will continue to grow in importance going forward into the future."
+        ),
+        "human_scores": {
+            "helpfulness":      {"a": 5, "b": 2},
+            "factual_accuracy": {"a": 5, "b": 3},
+            "coherence":        {"a": 5, "b": 1},
+            "safety":           {"a": 5, "b": 5},
+        },
+        "human_preference": "a",
+    },
+
+    # REASONING — length-inverted
+    {
+        "id": "R10", "category": "reasoning",
+        "question": (
+            "Is this argument valid? 'All mammals are warm-blooded. Whales are warm-blooded. "
+            "Therefore, whales are mammals.' Answer and explain briefly."
+        ),
+        "response_a": (
+            "The argument is **invalid** — it commits the fallacy of affirming the consequent. "
+            "Even if all mammals are warm-blooded, that does not mean all warm-blooded animals "
+            "are mammals. The premises allow for warm-blooded non-mammals, so the conclusion "
+            "does not follow logically. (Whales happen to be mammals, but not because of this argument.)"
+        ),
+        "response_b": (
+            "Yes, this argument is valid because it follows a logical pattern that makes sense. "
+            "We know from the first premise that all mammals are warm-blooded animals. We also "
+            "know from the second premise that whales are warm-blooded animals. Since whales "
+            "share the very important property of being warm-blooded with all mammals, and since "
+            "being warm-blooded is stated in the first premise as a characteristic that mammals "
+            "have, we can therefore logically and reasonably conclude that whales must indeed be "
+            "mammals. This conclusion flows naturally and consistently from the two premises that "
+            "we have been given, and there do not appear to be any obvious contradictions or "
+            "inconsistencies between the premises and the conclusion that we have reached. "
+            "The logic moves forward in a clear direction from premise to conclusion and the "
+            "argument holds together well as a whole. Therefore the argument is valid."
+        ),
+        "human_scores": {
+            "helpfulness":      {"a": 5, "b": 1},
+            "factual_accuracy": {"a": 5, "b": 1},
+            "coherence":        {"a": 5, "b": 2},
+            "safety":           {"a": 5, "b": 5},
+        },
+        "human_preference": "a",
+    },
+    {
+        "id": "R11", "category": "reasoning",
+        "question": "You have a 3-litre jug and a 5-litre jug with no markings. How do you measure exactly 4 litres?",
+        "response_a": (
+            "1. Fill the 5L jug.\n"
+            "2. Pour from 5L into 3L until full → 5L now has 2L.\n"
+            "3. Empty the 3L jug.\n"
+            "4. Pour the 2L from 5L into the 3L jug.\n"
+            "5. Fill the 5L jug again.\n"
+            "6. Pour from 5L into 3L until full (needs 1L) → 5L now has exactly **4L**."
+        ),
+        "response_b": (
+            "This is a classic water pouring puzzle that requires careful systematic thinking. "
+            "To solve this I will try different combinations of filling and pouring. First you "
+            "could try filling the 3 litre jug completely and then pouring all of it into the "
+            "5 litre jug. Now the 5 litre jug has 3 litres in it. Then you fill the 3 litre jug "
+            "again and pour it into the 5 litre jug which can only accept 2 more litres, so you "
+            "end up with 1 litre remaining in the 3 litre jug. Then you empty the 5 litre jug "
+            "completely and transfer that 1 litre into the 5 litre jug. Now fill the 3 litre "
+            "jug again and pour it all into the 5 litre jug which now has 1 plus 3 equals 4 "
+            "litres. Wait, actually I think that does work and gives you 4 litres in the 5 litre "
+            "jug. But I'm not completely sure if I tracked the steps correctly above. Let me "
+            "try to verify — actually the steps seem right but I may have made an error "
+            "somewhere in my tracking so you should double-check my work before relying on it."
+        ),
+        "human_scores": {
+            "helpfulness":      {"a": 5, "b": 2},
+            "factual_accuracy": {"a": 5, "b": 3},
+            "coherence":        {"a": 5, "b": 2},
+            "safety":           {"a": 5, "b": 5},
+        },
+        "human_preference": "a",
+    },
+
+    # MATH — length-inverted
+    {
+        "id": "M9", "category": "math",
+        "question": "What is 15% of 80? Show your work.",
+        "response_a": (
+            "**12.**\n\n80 × 0.15 = 12."
+        ),
+        "response_b": (
+            "To find 15% of 80 we first need to convert the percentage into a decimal. "
+            "15% means 15 out of every 100, so as a decimal that is 0.15. Now we need to "
+            "multiply this decimal by 80. So we calculate 0.15 multiplied by 80. "
+            "Let me break this down: 0.1 times 80 equals 8, and 0.05 times 80 equals... "
+            "well 0.05 is half of 0.1 so that should be half of 8 which is 4. But wait, "
+            "let me reconsider. 0.05 times 80: if I multiply 5 times 80 I get 400, and "
+            "then divide by 100 I get 4. Hmm but adding 8 and 4 gives 12. "
+            "Actually wait, let me try another method: 15 times 80 equals 1200, and "
+            "1200 divided by 100 equals 12. But earlier I thought it might be 13 because "
+            "of rounding. Let me reconsider once more — 80 times 15 divided by 100... "
+            "I believe the final answer is approximately **13**."
+        ),
+        "human_scores": {
+            "helpfulness":      {"a": 5, "b": 2},
+            "factual_accuracy": {"a": 5, "b": 1},
+            "coherence":        {"a": 5, "b": 1},
+            "safety":           {"a": 5, "b": 5},
+        },
+        "human_preference": "a",
+    },
+    {
+        "id": "M10", "category": "math",
+        "question": "Simplify: (x² − 4) / (x − 2), assuming x ≠ 2.",
+        "response_a": (
+            "**(x + 2).**\n\n"
+            "Factor the numerator: x² − 4 = (x + 2)(x − 2).\n"
+            "Cancel the common factor (x − 2):\n"
+            "(x + 2)(x − 2) / (x − 2) = **x + 2**."
+        ),
+        "response_b": (
+            "To simplify this expression we need to work with the numerator and denominator "
+            "carefully. The numerator is x squared minus 4 and the denominator is x minus 2. "
+            "One approach is to try to factor the numerator. We know that x squared minus 4 "
+            "involves a squared term and a constant, so perhaps we can factor it somehow. "
+            "If we think about it, x squared minus 4 could potentially be written as "
+            "x times x minus 4, but that doesn't help us cancel things. Alternatively "
+            "we could try long polynomial division, dividing x squared minus 4 by x minus 2. "
+            "Setting up the division: x squared divided by x gives us x, and x times "
+            "(x minus 2) is x squared minus 2x. Subtracting gives 2x minus 4. Then "
+            "2x divided by x is 2, and 2 times (x minus 2) is 2x minus 4. Subtracting "
+            "gives a remainder of 0. So the result of the division is x plus 2... "
+            "but wait, I should double-check whether we need to account for the "
+            "restriction x ≠ 2 in the final answer, which might change things. "
+            "I believe the simplified form is **x − 2**, with x ≠ 2."
+        ),
+        "human_scores": {
+            "helpfulness":      {"a": 5, "b": 2},
+            "factual_accuracy": {"a": 5, "b": 1},
+            "coherence":        {"a": 5, "b": 2},
+            "safety":           {"a": 5, "b": 5},
+        },
+        "human_preference": "a",
+    },
+
+    # CODING — length-inverted
+    {
+        "id": "C10", "category": "coding",
+        "question": "Write the most Pythonic one-liner to reverse a string s.",
+        "response_a": (
+            "```python\ns[::-1]\n```\n\n"
+            "Slice with step `-1` reverses any sequence in O(n) time and O(n) space. "
+            "No imports required."
+        ),
+        "response_b": (
+            "To reverse a string in Python you can write a custom function that manually "
+            "iterates through the string from the end to the beginning and builds up a new "
+            "result string character by character. Here is one way to implement this:\n\n"
+            "```python\n"
+            "def reverse_string(input_string):\n"
+            "    result = ''\n"
+            "    index = len(input_string)\n"
+            "    while index > 0:\n"
+            "        result = result + input_string[index]  # IndexError: off by one\n"
+            "        index = index - 1\n"
+            "    return result\n"
+            "```\n\n"
+            "This function initialises an empty result string and then uses a while loop "
+            "to iterate through the indices of the input string in reverse order, appending "
+            "each character to the result. The time complexity is O(n²) because string "
+            "concatenation in Python creates a new string object on every iteration, which "
+            "means that for a string of length n we perform n copy operations of increasing "
+            "size. This is generally acceptable for small strings but could be a performance "
+            "concern for very large strings in production systems."
+        ),
+        "human_scores": {
+            "helpfulness":      {"a": 5, "b": 2},
+            "factual_accuracy": {"a": 5, "b": 1},
+            "coherence":        {"a": 5, "b": 3},
+            "safety":           {"a": 5, "b": 5},
+        },
+        "human_preference": "a",
+    },
+    {
+        "id": "C11", "category": "coding",
+        "question": "Write a Python function to check if an integer n is even.",
+        "response_a": (
+            "```python\n"
+            "def is_even(n: int) -> bool:\n"
+            "    return n % 2 == 0\n"
+            "```"
+        ),
+        "response_b": (
+            "```python\n"
+            "def is_even(number):\n"
+            "    # Validate input\n"
+            "    if number is None:\n"
+            "        return False\n"
+            "    try:\n"
+            "        number = int(number)\n"
+            "    except (TypeError, ValueError):\n"
+            "        return False\n"
+            "    # Check using modulo\n"
+            "    if number % 2 == 0:\n"
+            "        is_it_even = True\n"
+            "    else:\n"
+            "        is_it_even = False\n"
+            "    # Cross-verify with bitwise AND\n"
+            "    if (number & 1) == 0:\n"
+            "        double_check = True\n"
+            "    else:\n"
+            "        double_check = False\n"
+            "    # Ensure both methods agree\n"
+            "    if is_it_even == double_check:\n"
+            "        return is_it_even\n"
+            "    else:\n"
+            "        return False  # should never happen\n"
+            "```\n\n"
+            "This comprehensive implementation validates the input, uses two independent "
+            "methods (modulo and bitwise AND) to check parity, and cross-verifies the "
+            "results to guarantee correctness."
+        ),
+        "human_scores": {
+            "helpfulness":      {"a": 5, "b": 2},
+            "factual_accuracy": {"a": 5, "b": 4},
+            "coherence":        {"a": 5, "b": 1},
+            "safety":           {"a": 5, "b": 5},
+        },
+        "human_preference": "a",
+    },
 ]
 
 CATEGORIES = ["writing", "reasoning", "math", "coding"]
@@ -1179,3 +1454,23 @@ def get_cases_by_category(category: str) -> list[dict]:
 
 def get_case_by_id(case_id: str) -> dict | None:
     return next((c for c in MT_BENCH_CASES if c["id"] == case_id), None)
+
+def get_flat_eval_cases(cases: list[dict]) -> list[dict]:
+    """
+    Flatten cases into individual evaluation tasks — one per response variant (A and B).
+    Including both variants ensures score variance for meaningful statistical analysis.
+    Each task has: eval_id, case_id, variant, category, question, response, human_scores.
+    """
+    flat = []
+    for case in cases:
+        for variant in ("a", "b"):
+            flat.append({
+                "eval_id": f"{case['id']}_{variant.upper()}",
+                "case_id": case["id"],
+                "variant": variant,
+                "category": case["category"],
+                "question": case["question"],
+                "response": case[f"response_{variant}"],
+                "human_scores": {dim: case["human_scores"][dim][variant] for dim in DIMENSIONS},
+            })
+    return flat
